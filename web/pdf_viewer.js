@@ -66,6 +66,8 @@ import { GenericL10n } from "web-null_l10n";
 import { PDFPageView } from "./pdf_page_view.js";
 import { PDFRenderingQueue } from "./pdf_rendering_queue.js";
 import { SimpleLinkService } from "./pdf_link_service.js";
+// eslint-disable-next-line import/no-cycle, sort-imports
+import { postMessageToParent } from "./communicate.js";
 
 const DEFAULT_CACHE_SIZE = 10;
 
@@ -1617,6 +1619,14 @@ class PDFViewer {
     this.eventBus.dispatch("updateviewarea", {
       source: this,
       location: this._location,
+    });
+    postMessageToParent({
+      event: "viewportUpdated",
+      result: {
+        scale: this.currentScale,
+        x: this.container.scrollLeft,
+        y: this.container.scrollTop,
+      },
     });
   }
 

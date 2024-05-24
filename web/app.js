@@ -85,6 +85,8 @@ import { Preferences } from "web-preferences";
 import { SecondaryToolbar } from "web-secondary_toolbar";
 import { Toolbar } from "web-toolbar";
 import { ViewHistory } from "./view_history.js";
+// eslint-disable-next-line import/no-cycle, sort-imports
+import { initCommunicate, postMessageToParent } from "./communicate.js";
 
 const FORCE_PAGES_LOADED_TIMEOUT = 10000; // ms
 const WHEEL_ZOOM_DISABLED_TIMEOUT = 1000; // ms
@@ -251,6 +253,18 @@ const PDFViewerApplication = {
 
     this._initializedCapability.settled = true;
     this._initializedCapability.resolve();
+    initCommunicate();
+
+    PDFViewerApplication.eventBus.on("documentloaded", e => {
+      setTimeout(() => {
+        window.parent.postMessage(
+          {
+            event: "pdfViewerLoaded",
+          },
+          "*"
+        );
+      }, 160);
+    });
   },
 
   /**
@@ -349,6 +363,9 @@ const PDFViewerApplication = {
       params.has("locale")
     ) {
       AppOptions.set("locale", params.get("locale"));
+      if (params.has("origin")) {
+        AppOptions.set("parentOrigin", params.get("origin"));
+      }
     }
 
     // Set some specific preferences for tests.
@@ -633,94 +650,94 @@ const PDFViewerApplication = {
     this.preferences = new Preferences();
     await this.initialize(config);
 
-    const { appConfig, eventBus } = this;
-    let file;
-    if (typeof PDFJSDev === "undefined" || PDFJSDev.test("GENERIC")) {
-      const queryString = document.location.search.substring(1);
-      const params = parseQueryString(queryString);
-      file = params.get("file") ?? AppOptions.get("defaultUrl");
-      validateFileURL(file);
-    } else if (PDFJSDev.test("MOZCENTRAL")) {
-      file = window.location.href;
-    } else if (PDFJSDev.test("CHROME")) {
-      file = AppOptions.get("defaultUrl");
-    }
+    // const { appConfig, eventBus } = this;
+    // let file;
+    // if (typeof PDFJSDev === "undefined" || PDFJSDev.test("GENERIC")) {
+    //   const queryString = document.location.search.substring(1);
+    //   const params = parseQueryString(queryString);
+    //   file = params.get("file") ?? AppOptions.get("defaultUrl");
+    //   validateFileURL(file);
+    // } else if (PDFJSDev.test("MOZCENTRAL")) {
+    //   file = window.location.href;
+    // } else if (PDFJSDev.test("CHROME")) {
+    //   file = AppOptions.get("defaultUrl");
+    // }
 
-    if (typeof PDFJSDev === "undefined" || PDFJSDev.test("GENERIC")) {
-      const fileInput = (this._openFileInput = document.createElement("input"));
-      fileInput.id = "fileInput";
-      fileInput.hidden = true;
-      fileInput.type = "file";
-      fileInput.value = null;
-      document.body.append(fileInput);
+    // if (typeof PDFJSDev === "undefined" || PDFJSDev.test("GENERIC")) {
+    //   const fileInput = (this._openFileInput = document.createElement("input"));
+    //   fileInput.id = "fileInput";
+    //   fileInput.hidden = true;
+    //   fileInput.type = "file";
+    //   fileInput.value = null;
+    //   document.body.append(fileInput);
 
-      fileInput.addEventListener("change", function (evt) {
-        const { files } = evt.target;
-        if (!files || files.length === 0) {
-          return;
-        }
-        eventBus.dispatch("fileinputchange", {
-          source: this,
-          fileInput: evt.target,
-        });
-      });
+    //   fileInput.addEventListener("change", function (evt) {
+    //     const { files } = evt.target;
+    //     if (!files || files.length === 0) {
+    //       return;
+    //     }
+    //     eventBus.dispatch("fileinputchange", {
+    //       source: this,
+    //       fileInput: evt.target,
+    //     });
+    //   });
 
-      // Enable dragging-and-dropping a new PDF file onto the viewerContainer.
-      appConfig.mainContainer.addEventListener("dragover", function (evt) {
-        evt.preventDefault();
+    //   // Enable dragging-and-dropping a new PDF file onto the viewerContainer.
+    //   appConfig.mainContainer.addEventListener("dragover", function (evt) {
+    //     evt.preventDefault();
 
-        evt.dataTransfer.dropEffect =
-          evt.dataTransfer.effectAllowed === "copy" ? "copy" : "move";
-      });
-      appConfig.mainContainer.addEventListener("drop", function (evt) {
-        evt.preventDefault();
+    //     evt.dataTransfer.dropEffect =
+    //       evt.dataTransfer.effectAllowed === "copy" ? "copy" : "move";
+    //   });
+    //   appConfig.mainContainer.addEventListener("drop", function (evt) {
+    //     evt.preventDefault();
 
-        const { files } = evt.dataTransfer;
-        if (!files || files.length === 0) {
-          return;
-        }
-        eventBus.dispatch("fileinputchange", {
-          source: this,
-          fileInput: evt.dataTransfer,
-        });
-      });
-    }
+    //     const { files } = evt.dataTransfer;
+    //     if (!files || files.length === 0) {
+    //       return;
+    //     }
+    //     eventBus.dispatch("fileinputchange", {
+    //       source: this,
+    //       fileInput: evt.dataTransfer,
+    //     });
+    //   });
+    // }
 
-    if (!AppOptions.get("supportsDocumentFonts")) {
-      AppOptions.set("disableFontFace", true);
-      this.l10n.get("pdfjs-web-fonts-disabled").then(msg => {
-        console.warn(msg);
-      });
-    }
+    // if (!AppOptions.get("supportsDocumentFonts")) {
+    //   AppOptions.set("disableFontFace", true);
+    //   this.l10n.get("pdfjs-web-fonts-disabled").then(msg => {
+    //     console.warn(msg);
+    //   });
+    // }
 
-    if (!this.supportsPrinting) {
-      appConfig.toolbar?.print?.classList.add("hidden");
-      appConfig.secondaryToolbar?.printButton.classList.add("hidden");
-    }
+    // if (!this.supportsPrinting) {
+    //   appConfig.toolbar?.print?.classList.add("hidden");
+    //   appConfig.secondaryToolbar?.printButton.classList.add("hidden");
+    // }
 
-    if (!this.supportsFullscreen) {
-      appConfig.secondaryToolbar?.presentationModeButton.classList.add(
-        "hidden"
-      );
-    }
+    // if (!this.supportsFullscreen) {
+    //   appConfig.secondaryToolbar?.presentationModeButton.classList.add(
+    //     "hidden"
+    //   );
+    // }
 
-    if (this.supportsIntegratedFind) {
-      appConfig.toolbar?.viewFind?.classList.add("hidden");
-    }
+    // if (this.supportsIntegratedFind) {
+    //   appConfig.toolbar?.viewFind?.classList.add("hidden");
+    // }
 
-    if (typeof PDFJSDev === "undefined" || PDFJSDev.test("GENERIC")) {
-      if (file) {
-        this.open({ url: file });
-      } else {
-        this._hideViewBookmark();
-      }
-    } else if (PDFJSDev.test("MOZCENTRAL || CHROME")) {
-      this.setTitleUsingUrl(file, /* downloadUrl = */ file);
+    // if (typeof PDFJSDev === "undefined" || PDFJSDev.test("GENERIC")) {
+    //   if (file) {
+    //     this.open({ url: file });
+    //   } else {
+    //     this._hideViewBookmark();
+    //   }
+    // } else if (PDFJSDev.test("MOZCENTRAL || CHROME")) {
+    //   this.setTitleUsingUrl(file, /* downloadUrl = */ file);
 
-      this.externalServices.initPassiveLoading();
-    } else {
-      throw new Error("Not implemented: run");
-    }
+    //   this.externalServices.initPassiveLoading();
+    // } else {
+    //   throw new Error("Not implemented: run");
+    // }
   },
 
   get externalServices() {
