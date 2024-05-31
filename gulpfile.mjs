@@ -451,7 +451,9 @@ function tweakWebpackOutput(jsName) {
   ];
   const regex = new RegExp(`(${replacer.join("|")})`, "gm");
 
+  console.log(regex);
   return replace(regex, match => {
+    console.log("matched:", match);
     switch (match) {
       case " __webpack_exports__ = {};":
         return ` __webpack_exports__ = globalThis.${jsName} = {};`;
@@ -922,8 +924,9 @@ gulp.task("locale", function () {
   fs.rmSync(VIEWER_LOCALE_OUTPUT, { recursive: true, force: true });
   fs.mkdirSync(VIEWER_LOCALE_OUTPUT, { recursive: true });
 
-  const subfolders = fs.readdirSync(L10N_DIR);
-  subfolders.sort();
+  // const subfolders = fs.readdirSync(L10N_DIR);
+  // subfolders.sort();
+  const subfolders = ["en-US"];
   const viewerOutput = Object.create(null);
   const locales = [];
   for (const locale of subfolders) {
@@ -2428,3 +2431,74 @@ gulp.task("externaltest", function (done) {
   });
   done();
 });
+
+function buildMinifiedF3(defines, dir) {
+  fs.rmSync(dir, { recursive: true, force: true });
+
+  return ordered([
+    createMainBundle(defines).pipe(gulp.dest(dir + "build")),
+    createWorkerBundle(defines).pipe(gulp.dest(dir + "build")),
+    createSandboxBundle(defines).pipe(gulp.dest(dir + "build")),
+    createWebBundle(defines, {
+      defaultPreferencesDir: "minified-f3/",
+    }).pipe(gulp.dest(dir + "web")),
+    createImageDecodersBundle({ ...defines, IMAGE_DECODERS: true }).pipe(
+      gulp.dest(dir + "image_decoders")
+    ),
+    gulp.src(COMMON_WEB_FILES, { base: "web/" }).pipe(gulp.dest(dir + "web")),
+    gulp.src("LICENSE").pipe(gulp.dest(dir)),
+    gulp
+      .src(["web/locale/en-US/viewer.ftl", "web/locale/locale.json"], {
+        base: "web/",
+      })
+      .pipe(gulp.dest(dir + "web")),
+    createCMapBundle().pipe(gulp.dest(dir + "web/cmaps")),
+    createStandardFontBundle().pipe(gulp.dest(dir + "web/standard_fonts")),
+
+    preprocessHTML("web/viewer.html", defines).pipe(gulp.dest(dir + "web")),
+    preprocessCSS("web/viewer.css", defines)
+      .pipe(
+        postcss([
+          postcssDirPseudoClass(),
+          discardCommentsCSS(),
+          postcssNesting(),
+          postcssDarkThemeClass(),
+          autoprefixer(AUTOPREFIXER_CONFIG),
+        ])
+      )
+      .pipe(gulp.dest(dir + "web")),
+  ]);
+}
+
+const MINIFIED_F3_DIR = BUILD_DIR + "minified-f3/";
+gulp.task(
+  "minified-f3",
+  gulp.series(
+    createBuildNumber,
+    "locale",
+    function scriptingMinified() {
+      const defines = {
+        ...DEFINES,
+        MINIFIED: true,
+        GENERIC: true,
+      };
+      return ordered([
+        buildDefaultPreferences(defines, "minified-f3/"),
+        createTemporaryScriptingBundle(defines),
+      ]);
+    },
+    async function prefsMinified() {
+      await parseDefaultPreferences("minified-f3/");
+    },
+    function createMinified() {
+      console.log();
+      console.log("### Creating minified viewer");
+      const defines = {
+        ...DEFINES,
+        MINIFIED: true,
+        GENERIC: true,
+      };
+      return buildMinifiedF3(defines, MINIFIED_F3_DIR);
+    }
+  )
+);

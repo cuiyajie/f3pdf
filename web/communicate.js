@@ -32,7 +32,7 @@ function getPDFViewerState() {
 async function getCurrentPage() {
   const data = await getPDFViewerState();
   const page = PDFViewerApplication.pdfViewer.getPageView(data.page);
-  if (page.viewport) {
+  if (page?.viewport) {
     const scale = PDFViewerApplication.pdfViewer.currentScale;
     return page.viewport.clone({
       scale: scale * PixelsPerInch.PDF_TO_CSS_UNITS,
@@ -48,19 +48,26 @@ register("queryHistoryState", async () => {
 });
 
 register("getPDFViewerState", async () => {
+  const mainContainer = PDFViewerApplication.appConfig.mainContainer;
   const viewerContainer = PDFViewerApplication.appConfig.viewerContainer;
   const viewport = await getCurrentPage();
   const scale = PDFViewerApplication.pdfViewer.currentScale;
+  const count = PDFViewerApplication.pagesCount;
   const style = getComputedStyle(document.documentElement);
   const borderWidth = parseInt(style.getPropertyValue("--page-border"));
+  const toolbarContainer = PDFViewerApplication.appConfig.toolbar.container;
   return {
     scale,
     width: viewport?.width
-      ? viewport.width / scale + borderWidth * 2
+      ? viewport.width + borderWidth * 2
       : viewerContainer.clientWidth,
     height: viewerContainer.clientHeight,
-    x: viewerContainer.scrollLeft,
-    y: viewerContainer.scrollTop,
+    // shadow for container
+    toolbarHeight: toolbarContainer.offsetHeight + 1,
+    x: mainContainer.scrollLeft,
+    y: mainContainer.scrollTop,
+    gapHorizontal: 2 * (borderWidth + 1),
+    gapVertical: borderWidth * (count + 1) + 2 * (count + 1),
   };
 });
 
