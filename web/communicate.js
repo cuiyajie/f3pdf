@@ -1,6 +1,7 @@
 // eslint-disable-next-line import/no-cycle
 import { PDFViewerApplication } from "./app.js";
 import { PixelsPerInch } from "pdfjs-lib";
+import { Box } from "./box.js";
 
 const actions = {};
 let inited = false;
@@ -47,15 +48,63 @@ register("queryHistoryState", async () => {
   return { ...data };
 });
 
+register("captureViewerFromBox", async payload => {
+  const pdf = PDFViewerApplication;
+  const { x, y, w, h } = payload;
+  const sbox = new Box(x, y, w, h);
+  const style = getComputedStyle(document.documentElement);
+  const bodyBgColor = style.getPropertyValue("--body-bg-color") || "#fff";
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  canvas.width = sbox.w;
+  canvas.height = sbox.h;
+  ctx.fillStyle = bodyBgColor;
+  ctx.fillRect(0, 0, sbox.w, sbox.h);
+  let intersected = false;
+  for (let i = 0; i < pdf.pagesCount; i++) {
+    const pv = pdf.pdfViewer.getPageView(i);
+    const {
+      left: rx,
+      top: ry,
+      width: rw,
+      height: rh,
+    } = pv.canvas.getBoundingClientRect();
+    const { width: cw, height: ch } = pv.canvas;
+    const box = new Box(rx, ry, rw, rh);
+    if (Box.Collides(sbox, box)) {
+      intersected = true;
+      const intsec = Box.Intersect(sbox, box);
+      ctx.drawImage(
+        pv.canvas,
+        ((intsec.x - box.x) * cw) / rw,
+        ((intsec.y - box.y) * ch) / rh,
+        (intsec.w * cw) / rw,
+        (intsec.h * ch) / rh,
+        intsec.x - sbox.x,
+        intsec.y - sbox.y,
+        intsec.w,
+        intsec.h
+      );
+    } else if (intersected) {
+      break;
+    }
+  }
+  return new Promise(resolve => {
+    canvas.toBlob(resolve, "image/webp");
+  });
+});
+
 register("getPDFViewerState", async () => {
-  const mainContainer = PDFViewerApplication.appConfig.mainContainer;
-  const viewerContainer = PDFViewerApplication.appConfig.viewerContainer;
+  const pdf = PDFViewerApplication;
+  const mainContainer = pdf.appConfig.mainContainer;
+  const viewerContainer = pdf.appConfig.viewerContainer;
   const viewport = await getCurrentPage();
-  const scale = PDFViewerApplication.pdfViewer.currentScale;
-  const count = PDFViewerApplication.pagesCount;
+  const scale = pdf.pdfViewer.currentScale;
+  const count = pdf.pagesCount;
   const style = getComputedStyle(document.documentElement);
   const borderWidth = parseInt(style.getPropertyValue("--page-border"));
-  const toolbarContainer = PDFViewerApplication.appConfig.toolbar.container;
+  const toolbarContainer = pdf.appConfig.toolbar.container;
+  const gapVertical = viewerContainer.clientHeight - viewport.height * count;
   return {
     scale,
     width: viewport?.width
@@ -63,11 +112,11 @@ register("getPDFViewerState", async () => {
       : viewerContainer.clientWidth,
     height: viewerContainer.clientHeight,
     // shadow for container
-    toolbarHeight: toolbarContainer.offsetHeight + 1,
+    toolbarHeight: toolbarContainer.offsetHeight,
     x: mainContainer.scrollLeft,
     y: mainContainer.scrollTop,
     gapHorizontal: 2 * (borderWidth + 1),
-    gapVertical: borderWidth * (count + 1) + 2 * (count + 1),
+    gapVertical,
   };
 });
 

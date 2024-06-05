@@ -451,9 +451,7 @@ function tweakWebpackOutput(jsName) {
   ];
   const regex = new RegExp(`(${replacer.join("|")})`, "gm");
 
-  console.log(regex);
   return replace(regex, match => {
-    console.log("matched:", match);
     switch (match) {
       case " __webpack_exports__ = {};":
         return ` __webpack_exports__ = globalThis.${jsName} = {};`;
