@@ -96,6 +96,7 @@
   /*#if GENERIC*/
   --toolbarButton-openFile-icon: url(images/toolbarButton-openFile.svg);
   /*#endif*/
+  --toolbarButton-capture-icon: url(images/toolbarButton-capture.svg);
   --toolbarButton-download-icon: url(images/toolbarButton-download.svg);
   --toolbarButton-bookmark-icon: url(images/toolbarButton-bookmark.svg);
   --toolbarButton-viewThumbnail-icon: url(images/toolbarButton-viewThumbnail.svg);
@@ -332,6 +333,7 @@ body {
 }
 
 #toolbarSidebar {
+  display: none;
   width: 100%;
   height: 32px;
   background-color: var(--sidebar-toolbar-bg-color);
@@ -572,6 +574,7 @@ body {
 }
 
 #secondaryToolbarButtonContainer {
+  display: none;
   max-width: 220px;
   min-height: 26px;
   max-height: calc(var(--viewer-container-height) - 40px);
@@ -956,6 +959,11 @@ body {
 :is(#download, #secondaryDownload)::before {
   -webkit-mask-image: var(--toolbarButton-download-icon);
 	mask-image: var(--toolbarButton-download-icon);
+}
+
+#captureSlide::before {
+  -webkit-mask-image: var(--toolbarButton-capture-icon);
+  mask-image: var(--toolbarButton-capture-icon);
 }
 
 a.secondaryToolbarButton {

@@ -92,6 +92,7 @@ class PDFSidebar {
      */
     this.onToggled = null;
     this.onUpdateThumbnails = null;
+    this.onWidthChanged = null;
 
     this.outerContainer = elements.outerContainer;
     this.sidebarContainer = elements.sidebarContainer;
@@ -482,7 +483,7 @@ class PDFSidebar {
       return false;
     }
     this.#width = width;
-
+    this.onWidthChanged?.(width);
     docStyle.setProperty(SIDEBAR_WIDTH_VAR, `${width}px`);
     return true;
   }

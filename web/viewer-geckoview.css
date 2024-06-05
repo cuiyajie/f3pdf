@@ -231,6 +231,10 @@ body {
   mask-image: var(--toolbarButton-download-icon);
 }
 
+#captureSlide::before {
+  mask-image: var(--toolbarButton-capture-icon);
+}
+
 .dialogButton {
   width: auto;
   margin: 3px 4px 2px !important;

@@ -55,11 +55,13 @@ register("captureViewerFromBox", async payload => {
   const style = getComputedStyle(document.documentElement);
   const bodyBgColor = style.getPropertyValue("--body-bg-color") || "#fff";
   const canvas = document.createElement("canvas");
+  const pixelRatio = window.devicePixelRatio || 1;
   const ctx = canvas.getContext("2d");
-  canvas.width = sbox.w;
-  canvas.height = sbox.h;
+  canvas.width = sbox.w * pixelRatio;
+  canvas.height = sbox.h * pixelRatio;
   ctx.fillStyle = bodyBgColor;
   ctx.fillRect(0, 0, sbox.w, sbox.h);
+  ctx.scale(pixelRatio, pixelRatio);
   let intersected = false;
   for (let i = 0; i < pdf.pagesCount; i++) {
     const pv = pdf.pdfViewer.getPageView(i);
@@ -94,17 +96,23 @@ register("captureViewerFromBox", async payload => {
   });
 });
 
+function getSiderState() {
+  const pdf = PDFViewerApplication;
+  const sidebarContainer = pdf.appConfig.sidebar.sidebarContainer;
+  return {
+    siderWidth: sidebarContainer.clientWidth,
+    siderOpen: pdf.pdfSidebar.isOpen,
+  };
+}
+
 register("getPDFViewerState", async () => {
   const pdf = PDFViewerApplication;
   const mainContainer = pdf.appConfig.mainContainer;
   const viewerContainer = pdf.appConfig.viewerContainer;
   const viewport = await getCurrentPage();
   const scale = pdf.pdfViewer.currentScale;
-  const count = pdf.pagesCount;
-  const style = getComputedStyle(document.documentElement);
-  const borderWidth = parseInt(style.getPropertyValue("--page-border"));
+  const borderWidth = 9;
   const toolbarContainer = pdf.appConfig.toolbar.container;
-  const gapVertical = viewerContainer.clientHeight - viewport.height * count;
   return {
     scale,
     width: viewport?.width
@@ -115,13 +123,18 @@ register("getPDFViewerState", async () => {
     toolbarHeight: toolbarContainer.offsetHeight,
     x: mainContainer.scrollLeft,
     y: mainContainer.scrollTop,
-    gapHorizontal: 2 * (borderWidth + 1),
-    gapVertical,
+    ...getSiderState(),
   };
 });
 
+register("getSiderState", () => getSiderState());
+
+let catpureSlideBtn = null;
 function customizeButtons() {
-  // TODO
+  catpureSlideBtn = document.getElementById("captureSlide");
+  catpureSlideBtn.addEventListener("click", () => {
+    postMessageToParent({ event: "captureSlide" });
+  });
 }
 
 export function initCommunicate() {
