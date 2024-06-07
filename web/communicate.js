@@ -56,6 +56,7 @@ register("captureViewerFromBox", async payload => {
   const bodyBgColor = style.getPropertyValue("--body-bg-color") || "#fff";
   const canvas = document.createElement("canvas");
   const pixelRatio = window.devicePixelRatio || 1;
+  const scale = pdf.pdfViewer.currentScale;
   const ctx = canvas.getContext("2d");
   canvas.width = sbox.w * pixelRatio;
   canvas.height = sbox.h * pixelRatio;
@@ -63,21 +64,47 @@ register("captureViewerFromBox", async payload => {
   ctx.fillRect(0, 0, sbox.w, sbox.h);
   ctx.scale(pixelRatio, pixelRatio);
   let intersected = false;
+  let borderWidth;
   for (let i = 0; i < pdf.pagesCount; i++) {
     const pv = pdf.pdfViewer.getPageView(i);
-    const {
-      left: rx,
-      top: ry,
-      width: rw,
-      height: rh,
-    } = pv.canvas.getBoundingClientRect();
-    const { width: cw, height: ch } = pv.canvas;
+    const rect = pv.div.getBoundingClientRect();
+    if (borderWidth === undefined) {
+      borderWidth = parseFloat(getComputedStyle(pv.div).borderWidth);
+    }
+    const rx = rect.left + borderWidth;
+    const ry = rect.top + borderWidth;
+    const rw = rect.width - borderWidth * 2;
+    const rh = rect.height - borderWidth * 2;
     const box = new Box(rx, ry, rw, rh);
     if (Box.Collides(sbox, box)) {
+      let cw;
+      let ch;
+      let srcCanvas = pv.canvas;
+      if (srcCanvas) {
+        cw = srcCanvas.width;
+        ch = srcCanvas.height;
+      } else {
+        const viewport = pv.pdfPage.getViewport({ scale });
+        srcCanvas = document.createElement("canvas");
+        srcCanvas.width = Math.floor(viewport.width * pixelRatio);
+        srcCanvas.height = Math.floor(viewport.height * pixelRatio);
+        srcCanvas.style.width = Math.floor(viewport.width) + "px";
+        srcCanvas.style.height = Math.floor(viewport.height) + "px";
+        const srcCtx = srcCanvas.getContext("2d");
+        const renderTask = pv.pdfPage.render({
+          canvasContext: srcCtx,
+          transform:
+            pixelRatio !== 1 ? [pixelRatio, 0, 0, pixelRatio, 0, 0] : null,
+          viewport,
+        });
+        await renderTask.promise;
+        cw = srcCanvas.width;
+        ch = srcCanvas.height;
+      }
       intersected = true;
       const intsec = Box.Intersect(sbox, box);
       ctx.drawImage(
-        pv.canvas,
+        srcCanvas,
         ((intsec.x - box.x) * cw) / rw,
         ((intsec.y - box.y) * ch) / rh,
         (intsec.w * cw) / rw,
@@ -91,6 +118,7 @@ register("captureViewerFromBox", async payload => {
       break;
     }
   }
+  // eslint-disable-next-line consistent-return
   return new Promise(resolve => {
     canvas.toBlob(resolve, "image/webp");
   });
@@ -116,7 +144,7 @@ register("getPDFViewerState", async () => {
   return {
     scale,
     width: viewport?.width
-      ? viewport.width + borderWidth * 2
+      ? viewport.width + borderWidth * 2 * scale
       : viewerContainer.clientWidth,
     height: viewerContainer.clientHeight,
     // shadow for container
