@@ -1623,6 +1623,7 @@ class PDFViewer {
     postMessageToParent({
       event: "viewportUpdated",
       result: {
+        height: this.viewer.clientHeight,
         scale: this.currentScale,
         x: this.container.scrollLeft,
         y: this.container.scrollTop,
