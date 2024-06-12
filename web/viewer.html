@@ -389,8 +389,20 @@ See https://github.com/adobe-type-tools/cmap-resources
                   <span data-l10n-id="pdfjs-tools-button-label">Tools</span>
                 </button>
 
+                <div id="cursorToolButtonList" role="radiogroup">
+                  <button id="barCursorSelectTool" class="toolbarButton toggled" title="Text Selection Tool" tabindex="60" role="radio" aria-checked="true">
+                    <span>Text Selection Tool</span>
+                  </button>
+                  <button id="barCursorHandTool" class="toolbarButton" title="Hand Tool" tabindex="61" role="radio" aria-checked="false">
+                    <span>Hand Tool</span>
+                  </button>
+                </div>
+
                 <button id="captureSlide" class="toolbarButton" title="Capture slide" tabindex="44">
                   <span>Capture slide</span>
+                </button>
+                <button id="fullscreen" class="toolbarButton" title="Fullscreen" tabindex="45">
+                  <span>Fullscreen</span>
                 </button>
               </div>
               <div id="toolbarViewerMiddle">

@@ -6,6 +6,8 @@ import { Box } from "./box.js";
 const actions = {};
 let inited = false;
 let currentPageID = null;
+let catpureSlideBtn = null;
+let fullscreenBtn = null;
 
 const register = (name, handler) => {
   actions[name] = handler;
@@ -151,17 +153,25 @@ register("getPDFViewerState", async () => {
     toolbarHeight: toolbarContainer.offsetHeight,
     x: mainContainer.scrollLeft,
     y: mainContainer.scrollTop,
+    tool: pdf.pdfCursorTools.activeTool,
     ...getSiderState(),
   };
 });
 
 register("getSiderState", () => getSiderState());
 
-let catpureSlideBtn = null;
 function customizeButtons() {
   catpureSlideBtn = document.getElementById("captureSlide");
   catpureSlideBtn.addEventListener("click", () => {
     postMessageToParent({ event: "captureSlide" });
+  });
+
+  fullscreenBtn = document.getElementById("fullscreen");
+  fullscreenBtn.addEventListener("click", () => {
+    const isFullscreen = fullscreenBtn.classList.contains("is-fullscreen");
+    fullscreenBtn.classList.toggle("is-fullscreen", !isFullscreen);
+    fullscreenBtn.title = isFullscreen ? "Exit fullscreen" : "Enter fullscreen";
+    postMessageToParent({ event: "toggleFullscreen" });
   });
 }
 

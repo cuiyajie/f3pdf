@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+// eslint-disable-next-line import/no-cycle, sort-imports
+import { postMessageToParent } from "./communicate.js";
+
 // Class name of element which can be grabbed.
 const CSS_CLASS_GRAB = "grab-to-pan-grab";
 
@@ -115,6 +118,7 @@ class GrabToPan {
     // dragged a scrollbar (necessary for Opera Presto, Safari and IE)
     // (not needed for Chrome/Firefox)
     this.element.addEventListener("scroll", this._endPan, true);
+    postMessageToParent({ event: "startPan" });
     event.preventDefault();
     event.stopPropagation();
 
@@ -150,6 +154,7 @@ class GrabToPan {
     this.document.removeEventListener("mouseup", this._endPan, true);
     // Note: ChildNode.remove doesn't throw if the parentNode is undefined.
     this.overlay.remove();
+    postMessageToParent({ event: "endPan" });
   }
 }
 

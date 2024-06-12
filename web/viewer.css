@@ -97,6 +97,8 @@
   --toolbarButton-openFile-icon: url(images/toolbarButton-openFile.svg);
   /*#endif*/
   --toolbarButton-capture-icon: url(images/toolbarButton-capture.svg);
+  --toolbarButton-fullscreen-icon: url(images/toolbarButton-fullscreen.svg);
+  --toolbarButton-exitfullscreen-icon: url(images/toolbarButton-exitfullscreen.svg);
   --toolbarButton-download-icon: url(images/toolbarButton-download.svg);
   --toolbarButton-bookmark-icon: url(images/toolbarButton-bookmark.svg);
   --toolbarButton-viewThumbnail-icon: url(images/toolbarButton-viewThumbnail.svg);
@@ -729,6 +731,16 @@ body {
   overflow: hidden;
 }
 
+#cursorToolButtonList {
+  display: flex;
+  align-items: center;
+  margin-right: 8px;
+}
+
+#cursorToolButtonList .toolbarButton {
+  position: relative;
+}
+
 :is(.toolbarButton, .secondaryToolbarButton, .dialogButton)[disabled] {
   opacity: 0.5;
 }
@@ -966,6 +978,16 @@ body {
   mask-image: var(--toolbarButton-capture-icon);
 }
 
+#fullscreen::before {
+  -webkit-mask-image: var(--toolbarButton-fullscreen-icon);
+  mask-image: var(--toolbarButton-fullscreen-icon);
+}
+
+#fullscreen.is-fullscreen::before {
+  -webkit-mask-image: var(--toolbarButton-exitfullscreen-icon);
+  mask-image: var(--toolbarButton-exitfullscreen-icon);
+}
+
 a.secondaryToolbarButton {
   padding-top: 5px;
   text-decoration: none;
@@ -1064,11 +1086,12 @@ a:is(.toolbarButton, .secondaryToolbarButton)[href="#"] {
 	mask-image: var(--secondaryToolbarButton-rotateCw-icon);
 }
 
+#barCursorSelectTool::before,
 #cursorSelectTool::before {
   -webkit-mask-image: var(--secondaryToolbarButton-selectTool-icon);
 	mask-image: var(--secondaryToolbarButton-selectTool-icon);
 }
-
+#barCursorHandTool::before,
 #cursorHandTool::before {
   -webkit-mask-image: var(--secondaryToolbarButton-handTool-icon);
 	mask-image: var(--secondaryToolbarButton-handTool-icon);

@@ -69,6 +69,8 @@ function getViewerConfiguration() {
         "editorStampParamsToolbar"
       ),
       download: document.getElementById("download"),
+      cursorSelectToolButton: document.getElementById("barCursorSelectTool"),
+      cursorHandToolButton: document.getElementById("barCursorHandTool"),
     },
     secondaryToolbar: {
       toolbar: document.getElementById("secondaryToolbar"),

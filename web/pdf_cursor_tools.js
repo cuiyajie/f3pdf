@@ -18,6 +18,8 @@
 import { AnnotationEditorType, shadow } from "pdfjs-lib";
 import { CursorTool, PresentationModeState } from "./ui_utils.js";
 import { GrabToPan } from "./grab_to_pan.js";
+// eslint-disable-next-line import/no-cycle, sort-imports
+import { postMessageToParent } from "./communicate.js";
 
 /**
  * @typedef {Object} PDFCursorToolsOptions
@@ -116,6 +118,10 @@ class PDFCursorTools {
 
         enableActive();
       }
+      postMessageToParent({
+        event: "switchCursorToolChanged",
+        result: evt.tool,
+      });
     });
 
     let annotationEditorMode = AnnotationEditorType.NONE,

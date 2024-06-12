@@ -17,6 +17,7 @@
 
 import { AnnotationEditorType, ColorPicker, noContextMenu } from "pdfjs-lib";
 import {
+  CursorTool,
   DEFAULT_SCALE,
   DEFAULT_SCALE_VALUE,
   MAX_SCALE,
@@ -61,6 +62,18 @@ class Toolbar {
       { element: options.zoomOut, eventName: "zoomout" },
       { element: options.print, eventName: "print" },
       { element: options.download, eventName: "download" },
+      {
+        element: options.cursorSelectToolButton,
+        eventName: "switchcursortool",
+        eventDetails: { tool: CursorTool.SELECT },
+        close: true,
+      },
+      {
+        element: options.cursorHandToolButton,
+        eventName: "switchcursortool",
+        eventDetails: { tool: CursorTool.HAND },
+        close: true,
+      },
       {
         element: options.editorFreeTextButton,
         eventName: "switchannotationeditormode",
@@ -174,6 +187,7 @@ class Toolbar {
     this.updateLoadingIndicatorState();
 
     // Reset the Editor buttons too, since they're document specific.
+    this.eventBus.dispatch("switchcursortool", { source: this, reset: true });
     this.#editorModeChanged({ mode: AnnotationEditorType.DISABLE });
   }
 
@@ -234,6 +248,15 @@ class Toolbar {
       "annotationeditormodechanged",
       this.#editorModeChanged.bind(this)
     );
+
+    eventBus._on("cursortoolchanged", this.#cursorToolChanged.bind(this));
+  }
+
+  #cursorToolChanged({ tool }) {
+    const { cursorSelectToolButton, cursorHandToolButton } = this.#opts;
+
+    toggleCheckedBtn(cursorSelectToolButton, tool === CursorTool.SELECT);
+    toggleCheckedBtn(cursorHandToolButton, tool === CursorTool.HAND);
   }
 
   #editorModeChanged({ mode }) {
