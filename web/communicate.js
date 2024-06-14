@@ -32,16 +32,21 @@ function getPDFViewerState() {
   });
 }
 
-async function getCurrentPage() {
-  const data = await getPDFViewerState();
-  const page = PDFViewerApplication.pdfViewer.getPageView(data.page);
-  if (page?.viewport) {
-    const scale = PDFViewerApplication.pdfViewer.currentScale;
-    return page.viewport.clone({
+function getPageViewport(page) {
+  const pdf = PDFViewerApplication;
+  const scale = pdf.pdfViewer.currentScale;
+  const pageView = pdf.pdfViewer.getPageView(page);
+  if (pageView?.viewport) {
+    return pageView.viewport.clone({
       scale: scale * PixelsPerInch.PDF_TO_CSS_UNITS,
     });
   }
   return null;
+}
+
+async function getCurrentPage() {
+  const data = await getPDFViewerState();
+  return getPageViewport(data.page);
 }
 
 register("queryHistoryState", async () => {
@@ -156,6 +161,21 @@ register("getPDFViewerState", async () => {
     tool: pdf.pdfCursorTools.activeTool,
     ...getSiderState(),
   };
+});
+
+register("scrollToPin", async y => {
+  const pdf = PDFViewerApplication;
+  const toolbarHeight = pdf.appConfig.toolbar.container.offsetHeight;
+  const scale = pdf.pdfViewer.currentScale;
+  const borderWidth = 9 * scale;
+  const offsetY = y * scale;
+  const viewport = getPageViewport(1);
+  let thePage =
+    Math.floor((offsetY - toolbarHeight) / (viewport.height + borderWidth)) + 1;
+  if (thePage > pdf.pagesCount + 1) {
+    thePage = pdf.pagesCount + 1;
+  }
+  pdf.pdfViewer.currentPageNumber = thePage;
 });
 
 register("getSiderState", () => getSiderState());
