@@ -630,25 +630,6 @@ const PDFViewerApplication = {
         eventBus,
         l10n,
       });
-      this.pdfSidebar.onToggled = () => {
-        this.forceRendering();
-        postMessageToParent({
-          event: "sidebarChanged",
-          result: {
-            siderWidth: this.pdfSidebar.sidebarContainer.clientWidth,
-            siderOpen: this.pdfSidebar.isOpen,
-          },
-        });
-      };
-      this.pdfSidebar.onWidthChanged = width => {
-        postMessageToParent({
-          event: "sidebarChanged",
-          result: {
-            siderWidth: width,
-            siderOpen: this.pdfSidebar.isOpen,
-          },
-        });
-      };
       this.pdfSidebar.onUpdateThumbnails = () => {
         // Use the rendered pages to set the corresponding thumbnail images.
         for (const pageView of pdfViewer.getCachedPageViews()) {
@@ -662,6 +643,7 @@ const PDFViewerApplication = {
           pdfViewer.currentPageNumber
         );
       };
+      this.pdfSidebar.onToggled = this.forceRendering.bind(this);
     }
   },
 

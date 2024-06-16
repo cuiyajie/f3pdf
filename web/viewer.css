@@ -264,7 +264,7 @@ body {
 
 #sidebarContainer {
   position: absolute;
-  inset-block: 32px 0;
+  inset-block: 0;
   inset-inline-start: calc(-1 * var(--sidebar-width));
   width: var(--sidebar-width);
   visibility: hidden;
@@ -275,6 +275,7 @@ body {
   transition-property: inset-inline-start;
   transition-duration: var(--sidebar-transition-duration);
   transition-timing-function: var(--sidebar-transition-timing-function);
+  background-color: var(--sidebar-narrow-bg-color);
 }
 
 #outerContainer:is(.sidebarMoving, .sidebarOpen) #sidebarContainer {
@@ -304,6 +305,7 @@ body {
   position: absolute;
   inset: 32px 0 0;
   outline: none;
+  inset-inline-start: 0 !important;
 }
 #viewerContainer:not(.pdfPresentationMode) {
   transition-duration: var(--sidebar-transition-duration);

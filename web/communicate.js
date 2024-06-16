@@ -44,11 +44,6 @@ function getPageViewport(page) {
   return null;
 }
 
-async function getCurrentPage() {
-  const data = await getPDFViewerState();
-  return getPageViewport(data.page);
-}
-
 register("queryHistoryState", async () => {
   const data = await getPDFViewerState();
 
@@ -131,35 +126,24 @@ register("captureViewerFromBox", async payload => {
   });
 });
 
-function getSiderState() {
-  const pdf = PDFViewerApplication;
-  const sidebarContainer = pdf.appConfig.sidebar.sidebarContainer;
-  return {
-    siderWidth: sidebarContainer.clientWidth,
-    siderOpen: pdf.pdfSidebar.isOpen,
-  };
-}
-
-register("getPDFViewerState", async () => {
+register("getPDFViewerState", () => {
   const pdf = PDFViewerApplication;
   const mainContainer = pdf.appConfig.mainContainer;
   const viewerContainer = pdf.appConfig.viewerContainer;
-  const viewport = await getCurrentPage();
+  const viewport = getPageViewport(1);
   const scale = pdf.pdfViewer.currentScale;
   const borderWidth = 9;
   const toolbarContainer = pdf.appConfig.toolbar.container;
   return {
     scale,
-    width: viewport?.width
-      ? viewport.width + borderWidth * 2 * scale
-      : viewerContainer.clientWidth,
+    width: viewport.width + borderWidth * 2 * scale,
     height: viewerContainer.clientHeight,
+    borderWidth,
     // shadow for container
     toolbarHeight: toolbarContainer.offsetHeight,
     x: mainContainer.scrollLeft,
     y: mainContainer.scrollTop,
     tool: pdf.pdfCursorTools.activeTool,
-    ...getSiderState(),
   };
 });
 
@@ -177,8 +161,6 @@ register("scrollToPin", async y => {
   }
   pdf.pdfViewer.currentPageNumber = thePage;
 });
-
-register("getSiderState", () => getSiderState());
 
 function customizeButtons() {
   catpureSlideBtn = document.getElementById("captureSlide");
